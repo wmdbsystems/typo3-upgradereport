@@ -92,8 +92,6 @@ class Tx_Smoothmigration_Utility_FileLocatorUtility implements t3lib_Singleton {
 			$pathToExtensionFolder = PATH_site . 'typo3conf/ext/' . $extensionKey . '/';
 		} else if(is_dir(PATH_site . 'typo3/ext/' . $extensionKey)) {
 			$pathToExtensionFolder = PATH_site . 'typo3/ext/' . $extensionKey . '/';
-		} else if(is_dir(PATH_site . 'typo3/sysext/' . $extensionKey)) {
-			$pathToExtensionFolder = PATH_site . 'typo3/sysext/' . $extensionKey . '/';
 		}
 
 		$positions = array();

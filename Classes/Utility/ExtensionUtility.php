@@ -286,7 +286,7 @@ class Tx_Smoothmigration_Utility_ExtensionUtility implements t3lib_Singleton {
 
 		if ($removeSystem) {
 			foreach ($loadedExtensionsFiltered as $key => $_) {
-				if ($GLOBALS['TYPO3_LOADED_EXT'][$key]['type'] === 'S') {
+				if (is_dir(PATH_site . 'typo3/sysext/' . $key)) {
 					unset($loadedExtensionsFiltered[$key]);
 				}
 			}
