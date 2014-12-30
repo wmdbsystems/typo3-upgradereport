@@ -87,16 +87,27 @@ class Tx_Smoothmigration_Utility_FileLocatorUtility implements t3lib_Singleton {
 	 *
 	 */
 	public static function searchInExtension($extensionKey, $fileNamePattern, $searchPattern) {
-		$pathToExtensionFolder = t3lib_extMgm::extPath($extensionKey);
-		$extensionIterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($pathToExtensionFolder));
-		$regularExpressionIterator = new RegexIterator($extensionIterator, '/' . trim($fileNamePattern, '/') . '/');
+		$pathToExtensionFolder = NULL;
+		if(is_dir(PATH_site . 'typo3conf/ext/' . $extensionKey)) {
+			$pathToExtensionFolder = PATH_site . 'typo3conf/ext/' . $extensionKey . '/';
+		} else if(is_dir(PATH_site . 'typo3/ext/' . $extensionKey)) {
+			$pathToExtensionFolder = PATH_site . 'typo3/ext/' . $extensionKey . '/';
+		} else if(is_dir(PATH_site . 'typo3/sysext/' . $extensionKey)) {
+			$pathToExtensionFolder = PATH_site . 'typo3/sysext/' . $extensionKey . '/';
+		}
 
 		$positions = array();
-		foreach ($regularExpressionIterator as $fileInfo) {
-			$locations = self::findLineNumbersOfStringInPhpFile($searchPattern, $fileInfo->getPathname());
 
-			foreach ($locations as $location) {
-				$positions[] = new Tx_Smoothmigration_Domain_Model_IssueLocation_File($extensionKey, str_replace(PATH_site, '', $fileInfo->getPathname()), $location['line'], $location['match']);
+		if($pathToExtensionFolder !== NULL){
+			$extensionIterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($pathToExtensionFolder));
+			$regularExpressionIterator = new RegexIterator($extensionIterator, '/' . trim($fileNamePattern, '/') . '/');
+
+			foreach ($regularExpressionIterator as $fileInfo) {
+				$locations = self::findLineNumbersOfStringInPhpFile($searchPattern, $fileInfo->getPathname());
+
+				foreach ($locations as $location) {
+					$positions[] = new Tx_Smoothmigration_Domain_Model_IssueLocation_File($extensionKey, str_replace(PATH_site, '', $fileInfo->getPathname()), $location['line'], $location['match']);
+				}
 			}
 		}
 
