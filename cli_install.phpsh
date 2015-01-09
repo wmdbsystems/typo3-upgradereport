@@ -1,0 +1,110 @@
+#! /usr/bin/env php
+<?php
+/**
+ * This file is part of the TYPO3 CMS project.
+ *
+ * It is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License, either version 2
+ * of the License, or any later version.
+ *
+ * For the full copyright and license information, please read the
+ * LICENSE.txt file that was distributed with this source code.
+ *
+ * The TYPO3 project - inspiring people to share!
+ */
+
+/**
+ * Command Line Install Tool runner
+ *
+ * @author Peter Kuehn <peter.kuehn@wmdb.de>
+ */
+define('TYPO3_MODE', 'BE');
+define('TYPO3_cliMode', TRUE);
+define('TYPO3_enterInstallScript', '1');
+
+$shortOpts  = "";
+//$shortOpts .= "f:";  // Required value
+$shortOpts .= "i::"; // Optional value -i - run interactive
+//$shortOpts .= "abc"; // These options do not accept values
+
+$longOpts  = array(
+//	"required:",     // Required value
+	"action::",    // Optional value
+//	"option",        // No value
+//	"opt",           // No value
+);
+$options = getopt($shortOpts, $longOpts);
+
+// Bootstrap bare minimum: class loader, LocalConfiguration, but no extensions and such
+require __DIR__ . '/../../../typo3/sysext/core/Classes/Core/Bootstrap.php';
+\TYPO3\CMS\Core\Core\Bootstrap::getInstance()
+	->baseSetup('typo3conf/ext/smoothmigration/')
+	->loadConfigurationAndInitialize(FALSE, 'TYPO3\\CMS\\Core\\Package\\FailsafePackageManager')
+//	->initializeTypo3DbGlobal()
+//	->initializeBackendUser()
+;
+
+//$GLOBALS['BE_USER']->user['admin'] = 1;
+
+require __DIR__ . '/Classes/Cli/CliInstallStepController.php';
+
+
+/**
+ * If localconf.php exists and LocalConfiguration.php doesnt, Installtool of 6.2 was never called before
+ * just execute
+ */
+/** @var $obj Tx_Smoothmigration_Cli_CliInstallStepController */
+if(!file_exists(PATH_typo3conf . 'LocalConfiguration.php') && file_exists(PATH_typo3conf . 'localconf.php')){
+	\TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('Tx_Smoothmigration_Cli_CliInstallStepController')->execute();
+}
+/**
+ * if PackageStates.php still doesnt exist, we need to execute again:
+ */
+if(!file_exists(PATH_typo3conf . 'PackageStates.php')){
+	\TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('Tx_Smoothmigration_Cli_CliInstallStepController')->execute();
+}
+
+//fix folder structure if requested:
+if($options['action'] === 'fixFolderStructure' || $options['action'] === 'all'){
+	echo 'Fixing Folder Structure... ';
+	$folderStructureFactory = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('TYPO3\\CMS\\Install\\FolderStructure\\DefaultFactory');
+	/** @var $structureFacade \TYPO3\CMS\Install\FolderStructure\StructureFacade */
+	$structureFacade = $folderStructureFactory->getStructure();
+	$fixedStatusObjects = $structureFacade->fix();
+	echo ' done.' . LF;
+}
+
+//var_dump(array('isadmin?' => $GLOBALS['BE_USER']->isAdmin()));
+
+
+if($options['action'] === 'upgradeWizard' || $options['action'] === 'all'){
+	echo 'running upgrade wizard... ';
+	require __DIR__ . '/Classes/Cli/CliInstallToolController.php';
+	require __DIR__ . '/Classes/Cli/CliInstallView.php';
+	/** @var $obj Tx_Smoothmigration_Cli_CliInstallToolController */
+	$nextStep = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('Tx_Smoothmigration_Cli_CliInstallToolController')->execute();
+	echo LF;
+	while($nextStep){
+		echo $nextStep['title'] . '...';
+		$obj = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('Tx_Smoothmigration_Cli_CliInstallToolController');
+		$formValues = array(
+			'controller' => 'tool',
+			'action' => 'upgradeWizard',
+			'context' => 'standalone',
+			'values' => array(
+				'identifier' => $nextStep['identifier']
+			),
+			'set' => array(
+				'performUpdate' => 1
+			)
+		);
+		if($nextStep['identifier'] === 'changeCompatibilityVersion'){
+			$formValues['values']['changeCompatibilityVersion']['compatVersion']['all'] = 1;
+		}
+		$obj->setPostValues($formValues);
+		$obj->execute();
+		echo ' done.' . LF;
+		$nextStep = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('Tx_Smoothmigration_Cli_CliInstallToolController')->execute();
+	}
+
+}
