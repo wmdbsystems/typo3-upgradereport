@@ -41,13 +41,6 @@ class Tx_Smoothmigration_Checks_Core_Namespace_Processor extends Tx_Smoothmigrat
 		$classAliasProvider = t3lib_div::makeInstance('Tx_Smoothmigration_Service_ClassAliasProvider');
 
 		$legacyClasses = array_keys($classAliasProvider->getLegacyClasses());
-
-		// the words "template" and "language" will be replaced everywhere in all PHP files. That will mostly result in broken PHP.
-		$tmpLegacyClasses = array_flip($legacyClasses);
-		unset($tmpLegacyClasses['template']);
-		unset($tmpLegacyClasses['language']);
-		$legacyClasses = array_flip($tmpLegacyClasses);
-
 		$classAaliases = array_keys($classAliasProvider->getClassAliasMap());
 
 		$classes = array_unique(array_merge($legacyClasses, $classAaliases), SORT_REGULAR);
