@@ -54,6 +54,14 @@ class Tx_Smoothmigration_Migrations_Core_Namespace_Processor extends Tx_Smoothmi
 	public function execute() {
 		$this->classAliasProvider = $this->objectManager->get('Tx_Smoothmigration_Service_ClassAliasProvider');
 		$this->legacyClasses = $this->classAliasProvider->getLegacyClasses();
+
+		// the words "template" and "language" will be replaced everywhere in all PHP files. That will mostly result in broken PHP.
+		$tmpLegacyClasses = array_flip($this->legacyClasses);
+		unset($tmpLegacyClasses['template']);
+		unset($tmpLegacyClasses['language']);
+		$this->legacyClasses = array_flip($tmpLegacyClasses);
+
+
 		$this->legacyClasses = array_change_key_case($this->legacyClasses, CASE_LOWER);
 		$this->classAliasMap = $this->classAliasProvider->getClassAliasMap();
 		$this->classAliasMap = array_change_key_case($this->classAliasMap, CASE_LOWER);
