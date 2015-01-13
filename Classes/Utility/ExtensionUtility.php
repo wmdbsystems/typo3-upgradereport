@@ -190,7 +190,11 @@ class Tx_Smoothmigration_Utility_ExtensionUtility implements t3lib_Singleton {
 			list($list,) = $extensionList->getInstalledExtensions();
 			$list = array_keys($list);
 		} else {
-			$list = \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::getLoadedExtensionListArray();
+
+			// this will return only the active extensions and NOT all installed extensions
+			//$list = \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::getLoadedExtensionListArray();
+
+			$list = array_diff(scandir(PATH_typo3conf . 'ext/'), array('..', '.', 'smoothmigration'));
 		}
 		self::$installedExtensions = $list;
 		return $list;
