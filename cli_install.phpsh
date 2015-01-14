@@ -84,27 +84,32 @@ if($options['action'] === 'upgradeWizard' || $options['action'] === 'all'){
 	/** @var $obj Tx_Smoothmigration_Cli_CliInstallToolController */
 	$nextStep = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('Tx_Smoothmigration_Cli_CliInstallToolController')->execute();
 	echo LF;
+	$lastStep = array('identifier' => null);
 	while($nextStep){
-		echo $nextStep['title'] . '...';
-		$obj = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('Tx_Smoothmigration_Cli_CliInstallToolController');
-		$formValues = array(
-			'controller' => 'tool',
-			'action' => 'upgradeWizard',
-			'context' => 'standalone',
-			'values' => array(
-				'identifier' => $nextStep['identifier']
-			),
-			'set' => array(
-				'performUpdate' => 1
-			)
-		);
-		if($nextStep['identifier'] === 'changeCompatibilityVersion'){
-			$formValues['values']['changeCompatibilityVersion']['compatVersion']['all'] = 1;
+		if($nextStep['identifier'] != $lastStep['identifier']) {
+			echo $nextStep['title'] . '...';
+			$obj = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('Tx_Smoothmigration_Cli_CliInstallToolController');
+			$formValues = array(
+				'controller' => 'tool',
+				'action' => 'upgradeWizard',
+				'context' => 'standalone',
+				'values' => array(
+					'identifier' => $nextStep['identifier']
+				),
+				'set' => array(
+					'performUpdate' => 1
+				)
+			);
+			if ($nextStep['identifier'] === 'changeCompatibilityVersion') {
+				$formValues['values']['changeCompatibilityVersion']['compatVersion']['all'] = 1;
+			}
+			$obj->setPostValues($formValues);
+			$obj->execute();
+			echo ' done.' . LF;
+			$nextStep = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('Tx_Smoothmigration_Cli_CliInstallToolController')->execute();
+		} else {
+			$nextStep = FALSE;
 		}
-		$obj->setPostValues($formValues);
-		$obj->execute();
-		echo ' done.' . LF;
-		$nextStep = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('Tx_Smoothmigration_Cli_CliInstallToolController')->execute();
 	}
 
 }
