@@ -104,9 +104,9 @@ if($options['action'] === 'upgradeWizard' || $options['action'] === 'all'){
 				$formValues['values']['changeCompatibilityVersion']['compatVersion']['all'] = 1;
 			}
 			$obj->setPostValues($formValues);
-			$obj->execute();
+
 			echo ' done.' . LF;
-			$nextStep = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('Tx_Smoothmigration_Cli_CliInstallToolController')->execute();
+			$nextStep = $obj->execute();
 		} else {
 			$nextStep = FALSE;
 		}
